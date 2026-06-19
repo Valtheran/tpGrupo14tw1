@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/app :: layout(~{::content}, ~{::header_left}, ~{::header_center}, ~{::header_right}, ~{}, _)}">
+<head>
+    <title>Usuarios / MCD Vencimientos</title>
+</head>
+<body>
+
+<div th:fragment="header_center">
+    <span class="text-puesto-header-text font-bold uppercase tracking-widest">Gestión de Usuarios</span>
+</div>
+
+<div th:fragment="header_left">
+    <a th:href="@{/home}" class="flex items-center px-4 py-2 bg-black/10 hover:bg-black/20 rounded-lg font-bold uppercase text-xs border border-white/20 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" />
+        </svg>
+        Volver
+    </a>
+</div>
+
+<div th:fragment="header_right">
+    <a th:href="@{/admin/usuarios/nuevo}"
+       class="flex items-center px-4 py-2 bg-black/10 hover:bg-black/20 rounded-lg border border-white/20 transition text-xs font-bold uppercase tracking-wider">
+        + Nuevo Usuario
+    </a>
+</div>
+
+<div th:fragment="content" class="p-6">
+
+    <div th:if="${#lists.isEmpty(usuarios)}" class="text-center p-10 mt-10 bg-white/5 rounded-xl border border-white/10">
+        <p class="text-xl text-white font-bold opacity-70">No hay usuarios registrados.</p>
+    </div>
+
+    <div th:unless="${#lists.isEmpty(usuarios)}" class="overflow-x-auto rounded-2xl border border-black/10 shadow">
+        <table class="w-full text-sm text-left border-collapse">
+            <thead class="uppercase text-xs tracking-wider bg-puesto-header text-puesto-header-text">
+                <tr>
+                    <th class="px-6 py-3">ID</th>
+                    <th class="px-6 py-3">Email</th>
+                    <th class="px-6 py-3">Rol</th>
+                    <th class="px-6 py-3">Estado</th>
+                    <th class="px-6 py-3">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="usuario : ${usuarios}" th:if="${usuario.activo}"
+                    class="border-b border-black/10 bg-white hover:bg-yellow-50 transition text-gray-800">
+                    <td class="px-6 py-4 font-mono text-gray-500" th:text="${usuario.id}"></td>
+                    <td class="px-6 py-4 font-bold" th:text="${usuario.email}"></td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800" th:text="${usuario.rol}"></span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span th:if="${usuario.activo}" class="px-2 py-1 rounded text-xs font-bold bg-green-700 text-white">Activo</span>
+                        <span th:unless="${usuario.activo}" class="px-2 py-1 rounded text-xs font-bold bg-red-700 text-white">Inactivo</span>
+                    </td>
+                    <td class="px-6 py-4 flex gap-2 items-center">
+                        <a th:href="@{/admin/usuarios/{id}/editar(id=${usuario.id})}"
+                           class="px-3 py-1 bg-puesto-header text-puesto-header-text rounded-lg text-xs font-bold hover:opacity-80 transition">
+                            Editar
+                        </a>
+                        <form th:if="${usuario.activo}"
+                              th:action="@{/admin/usuarios/{id}/dar-de-baja(id=${usuario.id})}"
+                              method="POST"
+                              onsubmit="return confirm('¿Confirma que desea dar de baja a este usuario?')">
+                            <button type="submit"
+                                    class="px-3 py-1 bg-red-600 !text-white rounded-lg text-xs font-bold hover:bg-red-700 transition">
+                                Dar de baja
+                            </button>
+                        </form>
+                        <form th:unless="${usuario.activo}"
+                              th:action="@{/admin/usuarios/{id}/reactivar(id=${usuario.id})}"
+                              method="POST">
+                            <button type="submit"
+                                    class="px-3 py-1 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition">
+                                Reactivar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-8">
+        <h3 class="text-lg font-bold uppercase tracking-widest text-slate-900 mb-4">Usuarios Pendientes de Aprobación</h3>
+        <div class="overflow-x-auto rounded-2xl border border-black/10 shadow">
+            <table class="w-full text-sm text-left border-collapse">
+                <thead class="uppercase text-xs tracking-wider bg-puesto-header text-puesto-header-text">
+                    <tr>
+                        <th class="px-6 py-3">ID</th>
+                        <th class="px-6 py-3">Email</th>
+                        <th class="px-6 py-3">Rol</th>
+                        <th class="px-6 py-3">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="usuario : ${usuarios}" th:if="${!usuario.activo}"
+                        class="border-b border-black/10 bg-white hover:bg-yellow-50 transition text-gray-800">
+                        <td class="px-6 py-4 font-mono text-gray-500" th:text="${usuario.id}"></td>
+                        <td class="px-6 py-4 font-bold" th:text="${usuario.email}"></td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800" th:text="${usuario.rol}"></span>
+                        </td>
+                        <td class="px-6 py-4 flex gap-2 items-center">
+                                        <button type="button"
+                                            th:attr="data-user-id=${usuario.id}, data-user-email=${usuario.email}"
+                                            class="abrir-modal-aprobar px-3 py-1 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition">
+                                Aprobar
+                            </button>
+                            <button type="button"
+                                    class="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-bold opacity-70 cursor-not-allowed"
+                                    disabled>
+                                Rechazar
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="aprobar-modal" class="fixed inset-0 z-50 hidden bg-black/40 p-4 items-center justify-center">
+        <div class="mx-auto max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div class="flex items-start justify-between gap-4 pb-4 border-b border-black/10">
+                <div>
+                    <h2 class="text-2xl font-black uppercase tracking-tighter">Aprobar Usuario</h2>
+                    <p class="text-sm text-gray-600 mt-2">Selecciona el área del usuario.</p>
+                </div>
+                <button id="cerrar-modal-aprobar" type="button" class="text-gray-500 hover:text-gray-900">✕</button>
+            </div>
+            <div class="mt-6 space-y-4">
+                <p class="text-sm text-gray-700">Usuario: <span id="modal-usuario-email" class="font-bold"></span></p>
+                <div id="aprobar-form" class="space-y-4">
+                    <div>
+                        <label for="categoria-select" class="block text-sm font-bold uppercase tracking-wider mb-2">Área</label>
+                        <select id="categoria-select" name="categoriaId"
+                                class="w-full px-4 py-3 rounded-xl border border-black/10 text-sm text-gray-800 focus:outline-none focus:ring-4 focus:ring-puesto-app">
+                            <option value="">Seleccione un área</option>
+                            <option th:each="categoria : ${categorias}"
+                                    th:value="${categoria.id}"
+                                    th:text="${categoria.nombre}"></option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-black/10">
+                        <button id="cancelar-aprobar" type="button"
+                                class="px-4 py-3 rounded-xl bg-black/10 text-sm font-bold uppercase tracking-wider hover:bg-black/20 transition">
+                            Cancelar
+                        </button>
+                        <button id="confirmar-aprobar" type="button"
+                                class="px-4 py-3 rounded-xl bg-green-600 text-white text-sm font-bold uppercase tracking-wider hover:bg-green-700 transition opacity-60 cursor-not-allowed"
+                                disabled>
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" th:src="@{/resources/core/js/usuarios-lista.js}" defer></script>
+</div>
+</body>
+</html>
